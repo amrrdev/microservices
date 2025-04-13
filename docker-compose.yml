@@ -16,6 +16,8 @@ services:
         consistency: cached
       - /app/node_modules
     command: npm run start:dev -- workflows-service
+    # deploy:
+    #   replicas: 3
     environment:
       - POSTGRES_HOST=workflows-db
       - POSTGRES_PORT=5432
@@ -27,9 +29,12 @@ services:
       - CHOKIDAR_INTERVAL=1000
       - CHOKIDAR_DISABLE_GLOBBING=true
       - NODE_ENV=development
+      - NATS_URL=nats://nats:4222
     depends_on:
       workflows-db:
         condition: service_healthy
+      nats:
+        condition: service_started
 
   workflows-db:
     image: postgres:13.2-alpine
@@ -71,10 +76,13 @@ services:
       - CHOKIDAR_INTERVAL=1000
       - CHOKIDAR_DISABLE_GLOBBING=true
       - NODE_ENV=development
+      - NATS_URL=nats://nats:4222
     depends_on:
       virtual-facility-db:
         condition: service_healthy
       workflows-service:
+        condition: service_started
+      nats:
         condition: service_started
 
   virtual-facility-db:
@@ -90,3 +98,5 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  nats:
+    image: nats:alpine
